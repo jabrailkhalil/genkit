@@ -1,0 +1,80 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Multipart tools merge validation
+on:
+  push:
+    branches: [validation/multipart-oct21]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 20.x
+      - name: Frozen dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir js install --frozen-lockfile
+          pnpm --dir genkit-tools install --frozen-lockfile
+      - name: Repository formatting and copyright
+        run: pnpm format:check
+      - name: Full repository build
+        shell: bash
+        run: |
+          mkdir -p /tmp/multipart-evidence
+          pnpm build 2>&1 | tee /tmp/multipart-evidence/build.log
+      - name: Full JavaScript suite
+        shell: bash
+        run: pnpm test:js 2>&1 | tee /tmp/multipart-evidence/tests.log
+      - name: Negative control on current upstream production files
+        shell: bash
+        run: |
+          source_files=(js/ai/src/generate.ts js/ai/src/generate/action.ts js/ai/src/generate/middleware.ts js/ai/src/generate/resolve-tool-requests.ts js/ai/src/tool.ts)
+          fixed_head=$(git rev-parse HEAD)
+          restore_sources() {
+            git restore --source="$fixed_head" --worktree -- "${source_files[@]}"
+          }
+          trap restore_sources EXIT
+          git restore --source=866440008802cca850dfd010ed61d66ef1d7670d --worktree -- "${source_files[@]}"
+          cd js/ai
+          set +e
+          node --import tsx --test --test-reporter=tap tests/tool_test.ts tests/generate/multipart_middleware_test.ts 2>&1 | tee /tmp/multipart-evidence/baseline.tap
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" -ne 0
+          grep -q ERR_ASSERTION /tmp/multipart-evidence/baseline.tap
+          cd ../..
+          restore_sources
+          trap - EXIT
+      - name: Clean tracked source after validation
+        run: bash .github/workflows/scripts/ensure-clean-working-tree.sh
+      - name: Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multipart-oct21
+          path: /tmp/multipart-evidence/
+          if-no-files-found: warn
