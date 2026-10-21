@@ -46,6 +46,13 @@ jobs:
         run: |
           mkdir -p /tmp/multipart-evidence
           pnpm build 2>&1 | tee /tmp/multipart-evidence/build.log
+      - name: Typecheck multipart regression files with repository options
+        working-directory: js/ai
+        shell: bash
+        run: |
+          trap 'rm -f tsconfig.multipart-review.json' EXIT
+          node --input-type=module -e "import fs from 'node:fs'; fs.writeFileSync('tsconfig.multipart-review.json', JSON.stringify({extends:'./tsconfig.json',include:['src','tests/tool_test.ts','tests/generate/multipart_middleware_test.ts','tests/generate/multipart_tools_test.ts']}));"
+          pnpm exec tsc -p tsconfig.multipart-review.json 2>&1 | tee /tmp/multipart-evidence/typecheck.log
       - name: Full JavaScript suite
         shell: bash
         run: pnpm test:js 2>&1 | tee /tmp/multipart-evidence/tests.log
