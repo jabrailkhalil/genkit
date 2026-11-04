@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: jabrailkhalil/firebase-tools
-          ref: ${{ matrix.source == 'base' && 'b36c23e6d2355902e5529f0b133650bf837d508c' || '95034783ab7de4a1d40c9c130aeeb090d19c54c7' }}
+          ref: ${{ matrix.source == 'base' && '14fa5a04daafa6e104a0edfacfd4e146be6a1f86' || '0bc4547dfd446e3654116d444463ea9183f8ffb8' }}
           persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-node@v4
@@ -40,7 +40,7 @@ jobs:
       - name: Negative control and restored Hosting suite
         if: matrix.source == 'head'
         env:
-          BASE: b36c23e6d2355902e5529f0b133650bf837d508c
+          BASE: 14fa5a04daafa6e104a0edfacfd4e146be6a1f86
         run: |
           set -euo pipefail
           cp src/serve/hosting.ts "$RUNNER_TEMP/patched-hosting.ts"
