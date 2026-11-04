@@ -11,14 +11,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.12']
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
         source: [candidate]
+        include:
+          - python: '3.12'
+            source: baseline
     env:
       CI: 'true'
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: ${{ matrix.source == 'candidate' && 'bc4aa4740a822c312e027a43adb4aaa49f593217' || 'b24021c82e4e5055f689639d59332401c5051a8e' }}
+          ref: ${{ matrix.source == 'candidate' && '0de7108deff10b6168f9feb7157ea592d72fe33f' || '8ee17216ec9c0aa973c78eef00ff3c89ff689ee0' }}
           fetch-depth: 0
           persist-credentials: false
       - run: sudo apt-get update && sudo apt-get install -y build-essential libffi-dev cmake libjpeg-dev zlib1g-dev
@@ -57,9 +60,9 @@ jobs:
         shell: bash
         run: |
           file=py/packages/genkit-middleware/src/genkit_middleware/_skills.py
-          restore_source() { git restore --source=bc4aa4740a822c312e027a43adb4aaa49f593217 --worktree -- "$file"; }
+          restore_source() { git restore --source=0de7108deff10b6168f9feb7157ea592d72fe33f --worktree -- "$file"; }
           trap restore_source EXIT
-          git restore --source=b24021c82e4e5055f689639d59332401c5051a8e --worktree -- "$file"
+          git restore --source=8ee17216ec9c0aa973c78eef00ff3c89ff689ee0 --worktree -- "$file"
           set +e
           COVERAGE_FILE=/tmp/skills-evidence/negative.coverage uv run --no-sync --directory py pytest -v packages/genkit-middleware/tests/skills_test.py --junitxml=/tmp/skills-evidence/negative.xml > /tmp/skills-evidence/negative.log 2>&1
           result=$?
