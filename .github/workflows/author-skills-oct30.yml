@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: ${{ matrix.source == 'candidate' && '0de7108deff10b6168f9feb7157ea592d72fe33f' || '8ee17216ec9c0aa973c78eef00ff3c89ff689ee0' }}
+          ref: ${{ matrix.source == 'candidate' && '706e73783cff93913ef18d3e8409098f32fe1410' || '8ee17216ec9c0aa973c78eef00ff3c89ff689ee0' }}
           fetch-depth: 0
           persist-credentials: false
       - run: sudo apt-get update && sudo apt-get install -y build-essential libffi-dev cmake libjpeg-dev zlib1g-dev
@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           file=py/packages/genkit-middleware/src/genkit_middleware/_skills.py
-          restore_source() { git restore --source=0de7108deff10b6168f9feb7157ea592d72fe33f --worktree -- "$file"; }
+          restore_source() { git restore --source=706e73783cff93913ef18d3e8409098f32fe1410 --worktree -- "$file"; }
           trap restore_source EXIT
           git restore --source=8ee17216ec9c0aa973c78eef00ff3c89ff689ee0 --worktree -- "$file"
           set +e
